@@ -27,6 +27,7 @@ build/
 *.jou
 *.o
 uart
+*.venv/
 work-ver/*
 corev_apu/fpga/work-fpga
 corev_apu/fpga/reports/
@@ -56,4 +57,4 @@ Bender.lock
 /config/gen_from_riscv_config/hwconfig/spike/spike.yaml
 /verif/sim/encaps.traces
 /verif/sim/iti.traces
-/verif/sim/verilator.fst.hier
+/verif/sim/verilator.fst.hierriscv32-embecosm-ubuntu2204-gcc13.2.0.tar.gz

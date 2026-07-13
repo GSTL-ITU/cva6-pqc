@@ -1,0 +1,17 @@
+{
+  "name": "CVA6 Verification Env",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "mshr-h.VerilogHDL"
+      ]
+    }
+  },
+  "remoteUser": "cva6user",
+  "updateRemoteUserUID": true,
+  "postCreateCommand": "bash python_requirements.sh"
+}
