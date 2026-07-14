@@ -27,7 +27,7 @@ git submodule update --init --recursive
 
 ```bash
 # This will build the simulation tools (Spike & Verilator)
-bash ./verif/regress/smoke-gen_tests.sh
+bash ./verif/regress/smoke-tests*.sh
 ```
 
 To run simulations and tests, you can either follow the scripts provided in `/verif/regress/` for smoke tests or refer to `/tutorials/running_sim.md`.
