@@ -26,8 +26,8 @@ git submodule update --init --recursive
 4. **Build the simulation tools:** Once the environment is up and running, you still need to build Spike and Verilator. These tools will be installed to /tools subdirectory and won't be compiled any image in the future. Open a new terminal inside VS Code and run the following command:
 
 ```bash
-# This will build the simulation tools (Spike & Verilator)
-bash ./verif/regress/smoke-tests*.sh
+# This will build the simulation tools (Spike & Verilator) and run the given test. Replace TESTNAME with a valid smoke test.
+bash ./verif/regress/smoke-tests<TESTNAME>.sh
 ```
 
 To run simulations and tests, you can either follow the scripts provided in `/verif/regress/` for smoke tests or refer to `/tutorials/running_sim.md`.
