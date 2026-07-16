@@ -1,12 +1,7 @@
 #include <stdint.h>
+#include "test_print.h"
 
 #define UART_REG_TXFIFO ((volatile uint8_t*)(0x10000000))
-
-void print_str(const char *s) {
-    while (*s) {
-        *UART_REG_TXFIFO = *s++;
-    }
-}
 
 // Standard Bubble Sort for floats
 void bubble_sort(volatile float* arr, int len) {
@@ -40,15 +35,29 @@ int main() {
     volatile float sorted_arr[]   = {14.1f, 32.2f, 54.4f, 103.0f, 128.9f, 176.8f, 195.5f};
     int len = 7;
 
+#ifdef PRINT_CYCLES
+    uint32_t start_cycles = get_cycles();
+#endif
+
     // Execute the sort using hardware FPU
     bubble_sort(unsorted_arr, len);
 
+#ifdef PRINT_CYCLES
+    uint32_t end_cycles = get_cycles();
+#endif
+    
     // Final result check
     if (check_arrays_equal(unsorted_arr, sorted_arr, len)) {
         print_str("SUCCESS!\n");
     } else {
         print_str("FAILURE!\n");
     }
+
+#ifdef PRINT_CYCLES
+    print_str("CYCLES:");
+    print_int(end_cycles - start_cycles);
+    print_str("\n");
+#endif
 
     return 0;
 }

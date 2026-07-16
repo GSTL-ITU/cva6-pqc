@@ -22,6 +22,10 @@ int main(void)
   uint8_t pk[CRYPTO_PUBLICKEYBYTES];
   uint8_t sk[CRYPTO_SECRETKEYBYTES];
 
+#ifdef PRINT_CYCLES
+  uint32_t start_cycles;
+  uint32_t end_cycles;
+#endif
   print_str("Initial message, test started...\n");
 
   for(i = 0; i < NTESTS; ++i) {
@@ -31,11 +35,38 @@ int main(void)
     randombytes(m, MLEN);
 
     print_str("Generating keypair...\n");
+#ifdef PRINT_CYCLES
+    start_cycles = get_cycles();
+#endif
     crypto_sign_keypair(pk, sk);
-    print_str("Signing message...\n");
+#ifdef PRINT_CYCLES
+    end_cycles = get_cycles();
+    print_str("Keypair generation cycle count: ");
+    print_int(end_cycles - start_cycles);
+#endif
+
+    print_str("\nSigning message...\n");
+#ifdef PRINT_CYCLES
+    start_cycles = get_cycles();
+#endif
     crypto_sign(sm, &smlen, m, MLEN, ctx, CTXLEN, sk);
-    print_str("Verifying message...\n");
+#ifdef PRINT_CYCLES
+    end_cycles = get_cycles();
+    print_str("Signature generation cycle count: ");
+    print_int(end_cycles - start_cycles);
+#endif
+    
+    print_str("\nVerifying message...\n");
+#ifdef PRINT_CYCLES
+    start_cycles = get_cycles();
+#endif
     ret = crypto_sign_open(m2, &mlen, sm, smlen, ctx, CTXLEN, pk);
+#ifdef PRINT_CYCLES
+    end_cycles = get_cycles();
+    print_str("Signature verification cycle count: ");
+    print_int(end_cycles - start_cycles);
+    print_str("\n");
+#endif
 
     if(ret) {
       print_str("Verification failed\n");
@@ -61,7 +92,7 @@ int main(void)
         return -1;
       }
     }
-    print_str("Messages match");
+    print_str("Messages match\n");
 
     randombytes((uint8_t *)&j, sizeof(j));
     do {

@@ -8,6 +8,10 @@ export DV_TARGET="cv32a60x"
 export DV_SIMULATORS=veri-testharness,spike
 export NUM_JOBS=8
 
+# Set this to 1 if you want to print clock cycles (through UART)
+# This will create mismatches between spike and verilator logs
+PRINT_CYCLES=0
+ 
 ############################################################################################
 
 TEST_NAME="bubble_sort"
@@ -17,6 +21,13 @@ make clean
 cd $ROOT_PROJECT/verif/sim
 make clean_all
 
+export EXTRA_FLAGS=""
+if [ $PRINT_CYCLES -eq 1 ]; then
+    export EXTRA_FLAGS+=" -DPRINT_CYCLES"
+else
+    export EXTRA_FLAGS+=""
+fi
+
 python3 cva6.py \
     --target $DV_TARGET \
     --iss=$DV_SIMULATORS \
@@ -25,7 +36,7 @@ python3 cva6.py \
     --linker=../../config/gen_from_riscv_config/linker/link.ld \
     --gcc_opts="-static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles \
     -g ../tests/custom/bubble_sort/test_print.c ../tests/custom/common/syscalls.c ../tests/custom/common/crt.S \
-    -lgcc -I../tests/custom/env -I../tests/custom/common"
+    -lgcc -I../tests/custom/env -I../tests/custom/common $EXTRA_FLAGS"
 
 LATEST_OUT_DIR=$(ls -td out_* | head -n 1)
 # If log file size exceeds this value, file is not copied to pqc_tests (default: 50 MB)
