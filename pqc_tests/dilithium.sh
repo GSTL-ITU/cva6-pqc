@@ -1,17 +1,22 @@
+#!/bin/bash
+
 # Change the target to your desired configuration
-TEST_TARGET="cv32a60x"
+export DV_TARGET="cv32a60x"
 DDILITHIUMMODE=2
 
 # If you want to change the simulator (default: veri-testharness,spike)
 # and number of cores (default: 8), modify this part
-#export DV_SIMULATORS=veri-testharness,spike
-#export NUM_JOBS=2
+export DV_SIMULATORS=veri-testharness,spike
+export NUM_JOBS=8
 
 ############################################################################################
 
 TEST_NAME="test_dilithium"
 
+cd $ROOT_PROJECT
+make clean
 cd $ROOT_PROJECT/verif/sim
+make clean_all
 
 python3 cva6.py \
 	--target $TEST_TARGET \
@@ -34,8 +39,8 @@ LATEST_OUT_DIR=$(ls -td out_* | head -n 1)
 MAX_LOGFILE_SIZE=50000000
 
 if [ -n $LATEST_OUT_DIR ]; then
-    LOG_FILE=$LATEST_OUT_DIR/veri-testharness_sim/$TEST_NAME.$TEST_TARGET.log
-    LOG_ISS_FILE=$LATEST_OUT_DIR/veri-testharness_sim/$TEST_NAME.$TEST_TARGET.log.iss
+    LOG_FILE=$LATEST_OUT_DIR/veri-testharness_sim/$TEST_NAME.$DV_TARGET.log
+    LOG_ISS_FILE=$LATEST_OUT_DIR/veri-testharness_sim/$TEST_NAME.$DV_TARGET.log.iss
 
     if [ -f $LOG_FILE ]; then
         FILE_SIZE=$(wc -c < $LOG_FILE)

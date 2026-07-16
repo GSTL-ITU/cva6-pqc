@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Change the target to your desired configuration
-TEST_TARGET="cv32a60x"
+export DV_TARGET="cv32a60x"
 
 # If you want to change the simulator (default: veri-testharness,spike)
 # and number of cores (default: 8), modify this part
@@ -12,10 +12,13 @@ export NUM_JOBS=8
 
 TEST_NAME="test_kyber"
 
+cd $ROOT_PROJECT
+make clean
 cd $ROOT_PROJECT/verif/sim
+make clean_all
 
 python3 cva6.py \
-    --target $TEST_TARGET \
+    --target $DV_TARGET \
     --iss=$DV_SIMULATORS \
     --iss_yaml=cva6.yaml \
     --issrun_opts="+time_out=500000000" \
@@ -43,8 +46,8 @@ LATEST_OUT_DIR=$(ls -td out_* | head -n 1)
 MAX_LOGFILE_SIZE=50000000
 
 if [ -n $LATEST_OUT_DIR ]; then
-    LOG_FILE=$LATEST_OUT_DIR/veri-testharness_sim/$TEST_NAME.$TEST_TARGET.log
-    LOG_ISS_FILE=$LATEST_OUT_DIR/veri-testharness_sim/$TEST_NAME.$TEST_TARGET.log.iss
+    LOG_FILE=$LATEST_OUT_DIR/veri-testharness_sim/$TEST_NAME.$DV_TARGET.log
+    LOG_ISS_FILE=$LATEST_OUT_DIR/veri-testharness_sim/$TEST_NAME.$DV_TARGET.log.iss
 
     if [ -f $LOG_FILE ]; then
         FILE_SIZE=$(wc -c < $LOG_FILE)
