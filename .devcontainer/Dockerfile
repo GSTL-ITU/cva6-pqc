@@ -106,3 +106,8 @@ RUN groupadd cva6user && \
 
 # Switch to our dedicated user
 USER cva6user
+
+# Support for Xilinx Vivado (if installed)
+RUN echo 'if [ -f "/opt/Xilinx/2025.2/Vivado/settings64.sh" ]; then' >> ~/.bashrc && \
+    echo '    source /opt/Xilinx/2025.2/Vivado/settings64.sh' >> ~/.bashrc && \
+    echo 'fi' >> ~/.bashrc
