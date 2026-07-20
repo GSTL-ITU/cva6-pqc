@@ -43,9 +43,10 @@ int main(void)
     end_cycles = get_cycles();
     print_str("Keypair generation cycle count: ");
     print_int(end_cycles - start_cycles);
+    print_str("\n");
 #endif
 
-    print_str("\nSigning message...\n");
+    print_str("Signing message...\n");
 #ifdef PRINT_CYCLES
     start_cycles = get_cycles();
 #endif
@@ -54,9 +55,10 @@ int main(void)
     end_cycles = get_cycles();
     print_str("Signature generation cycle count: ");
     print_int(end_cycles - start_cycles);
+    print_str("\n");
 #endif
     
-    print_str("\nVerifying message...\n");
+    print_str("Verifying message...\n");
 #ifdef PRINT_CYCLES
     start_cycles = get_cycles();
 #endif
