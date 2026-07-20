@@ -2,11 +2,17 @@
 
 # Change the target to your desired configuration
 export DV_TARGET="cv32a60x"
+# You can modify this to change the kyber parameter (2, 3 or 4)
+DKYBERK=2
 
 # If you want to change the simulator (default: veri-testharness,spike)
 # and number of cores (default: 8), modify this part
 export DV_SIMULATORS=veri-testharness,spike
 export NUM_JOBS=8
+
+# Set this to 1 if you want to print clock cycles (through UART)
+# This will create mismatches between spike and verilator logs
+PRINT_CYCLES=0
 
 ############################################################################################
 
@@ -16,6 +22,14 @@ cd $ROOT_PROJECT
 make clean
 cd $ROOT_PROJECT/verif/sim
 make clean_all
+
+export EXTRA_FLAGS=""
+if [ $PRINT_CYCLES -eq 1 ]; then
+    export EXTRA_FLAGS+=" -DPRINT_CYCLES"
+else
+    export EXTRA_FLAGS+=""
+fi
+export EXTRA_FLAGS+=" -DKYBER_K=$DKYBERK"
 
 python3 cva6.py \
     --target $DV_TARGET \
@@ -39,7 +53,7 @@ python3 cva6.py \
     ../tests/custom/kyber/symmetric-shake.c \
     ../tests/custom/kyber/verify.c \
     ../tests/custom/kyber/test/test_print.c \
-    -lgcc -I../tests/custom/env -I../tests/custom/common -I../tests/custom/kyber"
+    -lgcc -I../tests/custom/env -I../tests/custom/common -I../tests/custom/kyber $EXTRA_FLAGS"
 
 LATEST_OUT_DIR=$(ls -td out_* | head -n 1)
 # If log file size exceeds this value, file is not copied to pqc_tests (default: 50 MB)

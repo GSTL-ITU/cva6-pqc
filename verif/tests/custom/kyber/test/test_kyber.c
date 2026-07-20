@@ -25,15 +25,46 @@ static int test_keys(void)
   uint8_t ct[CRYPTO_CIPHERTEXTBYTES];
   uint8_t key_a[CRYPTO_BYTES];
   uint8_t key_b[CRYPTO_BYTES];
+#ifdef PRINT_CYCLES
+  uint32_t start_cycles;
+  uint32_t end_cycles;
+#endif
 
   print_str("Generating keypair...\n");
+#ifdef PRINT_CYCLES
+  start_cycles = get_cycles();
+#endif
   crypto_kem_keypair(pk, sk);
+#ifdef PRINT_CYCLES
+  end_cycles = get_cycles();
+  print_str("Keypair generation cycle count: ");
+  print_int(end_cycles - start_cycles);
+  print_str("\n");
+#endif
 
   print_str("Encapsulating secret...\n");
+#ifdef PRINT_CYCLES
+  start_cycles = get_cycles();
+#endif
   crypto_kem_enc(ct, key_b, pk);
+#ifdef PRINT_CYCLES
+  end_cycles = get_cycles();
+  print_str("Encapsulation cycle count: ");
+  print_int(end_cycles - start_cycles);
+  print_str("\n");
+#endif
 
   print_str("Decapsulating secret...\n");
+#ifdef PRINT_CYCLES
+  start_cycles = get_cycles();
+#endif
   crypto_kem_dec(key_a, ct, sk);
+#ifdef PRINT_CYCLES
+  end_cycles = get_cycles();
+  print_str("Decapsulation cycle count: ");
+  print_int(end_cycles - start_cycles);
+  print_str("\n");
+#endif
 
   if(custom_memcmp(key_a, key_b, CRYPTO_BYTES) != 0) {
     print_str("ERROR: Shared secrets do not match!\n");
