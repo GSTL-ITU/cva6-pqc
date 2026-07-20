@@ -8,6 +8,20 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     sudo \
     build-essential \
+    libtinfo5 \
+    libpixman-1-0 \
+    libxrender1 \
+    libxtst6 \
+    libxi6 \
+    libncurses5 \
+    libxext6 \
+    libx11-6 \
+    libglib2.0-0 \
+    libsm6 \
+    libfontconfig1 \
+    libxrandr2 \
+    libfreetype6 \
+    libxcursor1 \
     gcc-11 \
     g++-11 \
     python3 \
@@ -51,8 +65,9 @@ ENV LIBRARY_PATH="${RISCV}/lib"
 ENV LD_LIBRARY_PATH="${RISCV}/lib"
 ENV C_INCLUDE_PATH="${RISCV}/include"
 ENV CPLUS_INCLUDE_PATH="${RISCV}/include"
-ENV CXX="g++-11"
-ENV CC="gcc-11"
+# ENV CXX="g++-11"
+# ENV CC="gcc-11"
+ENV CROSSCOMPILE="riscv32-unknown-elf-"
 ENV NUM_JOBS=8
 
 # CVA6 Specific Simulation Environment Variables

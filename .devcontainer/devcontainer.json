@@ -3,6 +3,12 @@
   "build": {
     "dockerfile": "Dockerfile"
   },
+  "mounts": [
+    "source=/opt/Xilinx,target=/opt/Xilinx,type=bind,readonly"
+  ],
+  "runArgs": [
+    "--network=host"
+  ],
   "customizations": {
     "vscode": {
       "extensions": [
