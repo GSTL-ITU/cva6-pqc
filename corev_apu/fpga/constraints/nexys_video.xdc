@@ -97,3 +97,26 @@ set_false_path -from [get_pins i_ddr/u_xlnx_mig_7_ddr3_mig/u_ddr3_infrastructure
 ## Configuration options, can be used for all designs
 set_property CONFIG_VOLTAGE 3.3 [current_design]
 set_property CFGBVS VCCO [current_design]
+
+## Dummy Pin Mapping for unused DPTI Trace ports
+# Clock Capable Pin (Mapped to fmc_la00_cc_p)
+set_property -dict { PACKAGE_PIN K18  IOSTANDARD LVCMOS12 } [get_ports { prog_clko }]; 
+
+# Standard FMC pins with lowered Drive Strength for LVCMOS12 compatibility
+set_property -dict { PACKAGE_PIN K19  IOSTANDARD LVCMOS12  DRIVE 8 } [get_ports { prog_d[0] }];
+set_property -dict { PACKAGE_PIN J20  IOSTANDARD LVCMOS12  DRIVE 8 } [get_ports { prog_d[1] }];
+set_property -dict { PACKAGE_PIN J21  IOSTANDARD LVCMOS12  DRIVE 8 } [get_ports { prog_d[2] }];
+set_property -dict { PACKAGE_PIN M18  IOSTANDARD LVCMOS12  DRIVE 8 } [get_ports { prog_d[3] }];
+set_property -dict { PACKAGE_PIN L18  IOSTANDARD LVCMOS12  DRIVE 8 } [get_ports { prog_d[4] }];
+set_property -dict { PACKAGE_PIN N18  IOSTANDARD LVCMOS12  DRIVE 8 } [get_ports { prog_d[5] }];
+set_property -dict { PACKAGE_PIN N19  IOSTANDARD LVCMOS12  DRIVE 8 } [get_ports { prog_d[6] }];
+set_property -dict { PACKAGE_PIN N20  IOSTANDARD LVCMOS12  DRIVE 8 } [get_ports { prog_d[7] }];
+set_property -dict { PACKAGE_PIN M20  IOSTANDARD LVCMOS12 } [get_ports { prog_rxen }];
+set_property -dict { PACKAGE_PIN M21  IOSTANDARD LVCMOS12 } [get_ports { prog_txen }];
+set_property -dict { PACKAGE_PIN L21  IOSTANDARD LVCMOS12 } [get_ports { prog_oen }];
+set_property -dict { PACKAGE_PIN N22  IOSTANDARD LVCMOS12 } [get_ports { prog_rdn }];
+set_property -dict { PACKAGE_PIN M22  IOSTANDARD LVCMOS12 } [get_ports { prog_siwun }];
+set_property -dict { PACKAGE_PIN M13  IOSTANDARD LVCMOS12 } [get_ports { prog_wrn }];
+
+# Relax clock routing rules for this unused clock
+set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets prog_clko_IBUF]

@@ -59,4 +59,4 @@ Bender.lock
 /verif/sim/iti.traces
 /verif/sim/verilator.fst.hierriscv32-embecosm-ubuntu2204-gcc13.2.0.tar.gz
 
-/corev_apu/fpga/ariane.runs/
+/corev_apu/fpga/ariane.*/
