@@ -11,6 +11,9 @@ export NUM_JOBS=8
 # Set this to 1 if you want to print clock cycles (through UART)
 # This will create mismatches between spike and verilator logs
 PRINT_CYCLES=0
+
+# Set this to 1 if you want a detailed report on instruction counts and ratios
+PROFILE=0
  
 ############################################################################################
 
@@ -23,6 +26,7 @@ make clean_all
 
 export EXTRA_FLAGS=""
 if [ $PRINT_CYCLES -eq 1 ]; then
+    echo "Clock cycle printing is enabled, expect mismatches between Verilator ans Spike logs!"
     export EXTRA_FLAGS+=" -DPRINT_CYCLES"
 else
     export EXTRA_FLAGS+=""
@@ -49,6 +53,7 @@ if [ -n $LATEST_OUT_DIR ]; then
     if [ -f $LOG_FILE ]; then
         FILE_SIZE=$(wc -c < $LOG_FILE)
         if [ $FILE_SIZE -le $MAX_LOGFILE_SIZE ]; then
+            echo "Copying log file into pqc_tests/$TEST_NAME.log"
             cp $LOG_FILE ../../pqc_tests/$TEST_NAME.log
         else
             echo "Log file size exceeds the maximum limit, copy aborted."
@@ -58,9 +63,28 @@ if [ -n $LATEST_OUT_DIR ]; then
     fi
 
     if [ -f $LOG_ISS_FILE ]; then
+        echo "Copying log.iss file into pqc_tests/$TEST_NAME.log.iss"
         cp $LOG_ISS_FILE ../../pqc_tests/$TEST_NAME.log.iss
     else
         echo "WARNING: .log.iss file could not be found!"
+    fi
+
+    if [ $PROFILE -eq 1 ]; then
+        echo "Running CSV profiler for $TEST_NAME ..."
+
+        CSV_FILE=$(find $LATEST_OUT_DIR/veri-testharness_sim -name "$TEST_NAME.$DV_TARGET.csv" | head -n 1)
+        OBJ_FILE=$(find $LATEST_OUT_DIR/directed_tests -name "$TEST_NAME*.o" | head -n 1)
+
+        if [ -f $CSV_FILE ] && [ -f $OBJ_FILE ]; then
+            PROFILE_OUT_PATH="../../pqc_tests/${TEST_NAME}_profile.txt"
+
+            echo "Generating profile report: pqc_tests/${TEST_NAME}_profile.txt"
+            python3 ../../pqc_tests/profile_csv.py $OBJ_FILE $CSV_FILE $PROFILE_OUT_PATH
+        else
+            echo "WARNING: Profile files are missing!"
+            [ ! -f $CSV_FILE ] && echo "    -> CSV file not found in $LATEST_OUT_DIR"
+            [ ! -f $OBJ_FILE ] && echo "    -> Compiled Object/ELF file not found in $LATEST_OUT_DIR"
+        fi
     fi
 else
     echo "WARNING: out_* folder could not be found!"

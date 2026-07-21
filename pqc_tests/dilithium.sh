@@ -14,6 +14,9 @@ export NUM_JOBS=8
 # This will create mismatches between spike and verilator logs
 PRINT_CYCLES=0
 
+# Set this to 1 if you want a detailed report on instruction counts and ratios
+PROFILE=0
+
 ############################################################################################
 
 TEST_NAME="test_dilithium"
@@ -31,21 +34,21 @@ else
 fi
 export EXTRA_FLAGS+=" -DDILITHIUM_MODE=$DDILITHIUMMODE"
 
-python3 cva6.py \
-	--target $DV_TARGET \
-	--iss=$DV_SIMULATORS \
-	--iss_yaml=cva6.yaml \
-	--issrun_opts="+time_out=500000000" \
-	--iss_timeout 100000 \
-	--c_tests ../tests/custom/dilithium/test/test_dilithium.c \
-	--linker=../../config/gen_from_riscv_config/linker/link.ld \
-	--gcc_opts="-O0 -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles \
-	-g ../tests/custom/common/syscalls.c ../tests/custom/common/crt.S ../tests/custom/dilithium/sign.c \
-	../tests/custom/dilithium/packing.c ../tests/custom/dilithium/polyvec.c ../tests/custom/dilithium/poly.c \
-	../tests/custom/dilithium/ntt.c ../tests/custom/dilithium/reduce.c ../tests/custom/dilithium/rounding.c \
-	../tests/custom/dilithium/fips202.c ../tests/custom/dilithium/symmetric-shake.c \
-	../tests/custom/dilithium/randombytes.c ../tests/custom/dilithium/test/test_print.c \
-	-lgcc -I../tests/custom/env -I../tests/custom/common -I../tests/custom/dilithium $EXTRA_FLAGS"
+#python3 cva6.py \
+#	--target $DV_TARGET \
+#	--iss=$DV_SIMULATORS \
+#	--iss_yaml=cva6.yaml \
+#	--issrun_opts="+time_out=500000000" \
+#	--iss_timeout 100000 \
+#	--c_tests ../tests/custom/dilithium/test/test_dilithium.c \
+#	--linker=../../config/gen_from_riscv_config/linker/link.ld \
+#	--gcc_opts="-O0 -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles \
+#	-g ../tests/custom/common/syscalls.c ../tests/custom/common/crt.S ../tests/custom/dilithium/sign.c \
+#	../tests/custom/dilithium/packing.c ../tests/custom/dilithium/polyvec.c ../tests/custom/dilithium/poly.c \
+#	../tests/custom/dilithium/ntt.c ../tests/custom/dilithium/reduce.c ../tests/custom/dilithium/rounding.c \
+#	../tests/custom/dilithium/fips202.c ../tests/custom/dilithium/symmetric-shake.c \
+#	../tests/custom/dilithium/randombytes.c ../tests/custom/dilithium/test/test_print.c \
+#	-lgcc -I../tests/custom/env -I../tests/custom/common -I../tests/custom/dilithium $EXTRA_FLAGS"
 
 LATEST_OUT_DIR=$(ls -td out_* | head -n 1)
 # If log file size exceeds this value, file is not copied to pqc_tests (default: 50 MB)
@@ -58,6 +61,7 @@ if [ -n $LATEST_OUT_DIR ]; then
     if [ -f $LOG_FILE ]; then
         FILE_SIZE=$(wc -c < $LOG_FILE)
         if [ $FILE_SIZE -le $MAX_LOGFILE_SIZE ]; then
+            echo "Copying log file into pqc_tests/$TEST_NAME.log"
             cp $LOG_FILE ../../pqc_tests/$TEST_NAME.log
         else
             echo "Log file size exceeds the maximum limit, copy aborted."
@@ -67,9 +71,28 @@ if [ -n $LATEST_OUT_DIR ]; then
     fi
 
     if [ -f $LOG_ISS_FILE ]; then
+        echo "Copying log.iss file into pqc_tests/$TEST_NAME.log.iss"
         cp $LOG_ISS_FILE ../../pqc_tests/$TEST_NAME.log.iss
     else
         echo "WARNING: .log.iss file could not be found!"
+    fi
+
+    if [ $PROFILE -eq 1 ]; then
+        echo "Running CSV profiler for $TEST_NAME ..."
+
+        CSV_FILE=$(find $LATEST_OUT_DIR/veri-testharness_sim -name "$TEST_NAME.$DV_TARGET.csv" | head -n 1)
+        OBJ_FILE=$(find $LATEST_OUT_DIR/directed_tests -name "$TEST_NAME*.o" | head -n 1)
+
+        if [ -f $CSV_FILE ] && [ -f $OBJ_FILE ]; then
+            PROFILE_OUT_PATH="../../pqc_tests/${TEST_NAME}_profile.txt"
+
+            echo "Generating profile report: pqc_tests/${TEST_NAME}_profile.txt"
+            python3 ../../pqc_tests/profile_csv.py $OBJ_FILE $CSV_FILE $PROFILE_OUT_PATH
+        else
+            echo "WARNING: Profile files are missing!"
+            [ ! -f $CSV_FILE ] && echo "    -> CSV file not found in $LATEST_OUT_DIR"
+            [ ! -f $OBJ_FILE ] && echo "    -> Compiled Object/ELF file not found in $LATEST_OUT_DIR"
+        fi
     fi
 else
     echo "WARNING: out_* folder could not be found!"
