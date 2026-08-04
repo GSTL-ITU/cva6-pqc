@@ -63,9 +63,11 @@ Return to **Terminal 2** (GDB) and start the RISC-V core:
 
     (gdb) continue
 
-### Expected Result
+### Expected Result 
 Once `continue` is executed, **Terminal 3** should instantly print the clean initialization string, send the trigger, run the Falcon tests (including cycle profiling for keygen, signing, and verification), and gracefully close the connection:
 
+    Opening /dev/ttyUSB0 at 57600 baud...
+    Waiting for FPGA to initialize...
     FPGA: 
     FPGA: CVA6 UART INITIALIZED. Waiting for trigger...
 
@@ -73,15 +75,15 @@ Once `continue` is executed, **Terminal 3** should instantly print the clean ini
 
     --- Test Output ---
     ==================================
-     Falcon FPGA Hardware Test
+    Falcon FPGA Hardware Test
     ==================================
     --- Running Test Iteration 1 ---
     Generating keypair...
-    -> Cycles: 196904680
+    -> Cycles: 196182819
     Signing message...
-    -> Cycles: 77188146
+    -> Cycles: 80656349
     Verifying message...
-    -> Cycles: 1141406
+    -> Cycles: 1144339
     Signature valid and messages match.
     Testing trivial forgeries...
     Forged signatures rejected correctly.
@@ -90,6 +92,18 @@ Once `continue` is executed, **Terminal 3** should instantly print the clean ini
     FALCON_SECRETKEYBYTES = 1281
 
     Serial connection closed.
+
+### Hardware Performance Summary
+
+The following table details the cycle counts for the Falcon cryptographic operations running on the FPGA (Public Key: 897 bytes, Secret Key: 1281 bytes). It compares the unoptimized build (`-O0`) against the optimized build (`-O3`).
+
+| Operation | Unoptimized (`-O0`) Cycles | Optimized (`-O3`) Cycles |
+| :--- | ---: | ---: |
+| **Keypair Generation** | 2,723,650,597 | 196,182,819 |
+| **Signing Message** | 1,344,415,413 | 80,656,349 |
+| **Verifying Message** | 6,973,136 | 1,144,339 |
+
+
 
 ## Troubleshooting
 * **Garbage characters:** This is a baud rate mismatch or a framing error. Ensure `host_test.py` is set to `57600` baud and that you are using a 25MHz system clock on the FPGA.

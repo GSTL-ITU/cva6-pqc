@@ -91,6 +91,16 @@ Once `continue` is executed, **Terminal 3** should instantly print the clean ini
 
     Serial connection closed.
 
+### Hardware Performance Summary
+
+The following table details the cycle counts for the Kyber cryptographic operations running on the FPGA (Public Key: 1184 bytes, Secret Key: 2400 bytes, Ciphertext: 1088 bytes, Shared Secret: 32 bytes). It compares the unoptimized build (`-O0`) against the optimized build (`-O3`).
+
+| Operation | Unoptimized (`-O0`) Cycles | Optimized (`-O3`) Cycles |
+| :--- | ---: | ---: |
+| **Keypair Generation** | 18,862,487 | 4,870,962 |
+| **Encapsulating Secret** | 20,469,834 | 5,132,604 |
+| **Decapsulating Secret** | 21,835,714 | 5,375,795 |
+
 ## Troubleshooting
 * **Garbage characters:** This is a baud rate mismatch or a framing error. Ensure `host_test.py` is set to `57600` baud and that you are using a 25MHz system clock on the FPGA.
 * **Cannot open `/dev/ttyUSB0`:** Ensure you are using `sudo` to run the Python script, or add your user to the `dialout` group. Check your serial port name via `bash pyserial-ports` on any terminal. You can change the port parameter inside `host_test.py` to match your system.
