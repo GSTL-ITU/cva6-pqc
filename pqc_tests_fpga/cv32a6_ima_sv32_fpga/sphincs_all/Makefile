@@ -3,7 +3,7 @@ OBJCOPY = riscv32-unknown-elf-objcopy
 
 ARCH = -march=rv32ima_zicsr -mabi=ilp32 -mcmodel=medany
 
-CFLAGS = $(ARCH) -O2 -Wall --specs=nosys.specs -I../../../verif/tests/custom/sphincs
+CFLAGS = $(ARCH) -O3 -Wall --specs=nosys.specs -I../../../verif/tests/custom/sphincs
 LDFLAGS = -T ../link.ld -nostartfiles
 
 SRCS = ../../../verif/bsp/crt0.S \
