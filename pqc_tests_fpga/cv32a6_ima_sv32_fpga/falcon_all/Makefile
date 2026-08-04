@@ -3,9 +3,10 @@ OBJCOPY = riscv32-unknown-elf-objcopy
 
 ARCH = -march=rv32ima_zicsr -mabi=ilp32 -mcmodel=medany
 
+# Removed -O2 from the base flags.
 # -ffp-contract=off and -fno-math-errno are highly recommended for Falcon 
 # to ensure floating-point emulation behaves deterministically.
-CFLAGS = $(ARCH) -O2 -Wall --specs=nosys.specs -ffp-contract=off -fno-math-errno -I../../../verif/tests/custom/falcon
+CFLAGS_BASE = $(ARCH) -Wall --specs=nosys.specs -ffp-contract=off -fno-math-errno -I../../../verif/tests/custom/falcon
 LDFLAGS = -T ../link.ld -nostartfiles
 
 SRCS = ../../../verif/bsp/crt0.S \
@@ -21,12 +22,19 @@ SRCS = ../../../verif/bsp/crt0.S \
        ../../../verif/tests/custom/falcon/sign.c \
        ../../../verif/tests/custom/falcon/vrfy.c
 
-TARGET = load.elf
+TARGET_O0 = load_O0.elf
+TARGET_O3 = load_O3.elf
 
-all: $(TARGET)
+# Build both targets by default
+all: $(TARGET_O0) $(TARGET_O3)
 
-$(TARGET): $(SRCS)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
+# Rule for O0
+$(TARGET_O0): $(SRCS)
+	$(CC) $(CFLAGS_BASE) -O0 $(LDFLAGS) -o $@ $^
+
+# Rule for O3
+$(TARGET_O3): $(SRCS)
+	$(CC) $(CFLAGS_BASE) -O3 $(LDFLAGS) -o $@ $^
 
 clean:
-	rm -f $(TARGET)
+	rm -f $(TARGET_O0) $(TARGET_O3)

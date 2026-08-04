@@ -6,7 +6,7 @@ ARCH = -march=rv32ima_zicsr -mabi=ilp32 -mcmodel=medany
 # Dilithium parameter set (2, 3, or 5)
 DILITHIUM_MODE ?= 2
 
-CFLAGS = $(ARCH) -O2 -Wall --specs=nosys.specs -DDILITHIUM_MODE=$(DILITHIUM_MODE) -I../../../verif/tests/custom/dilithium
+CFLAGS_BASE = $(ARCH) -Wall --specs=nosys.specs -DDILITHIUM_MODE=$(DILITHIUM_MODE) -I../../../verif/tests/custom/dilithium
 LDFLAGS = -T ../link.ld -nostartfiles
 
 SRCS = ../../../verif/bsp/crt0.S \
@@ -22,12 +22,19 @@ SRCS = ../../../verif/bsp/crt0.S \
        ../../../verif/tests/custom/dilithium/symmetric-shake.c \
        ../../../verif/tests/custom/dilithium/randombytes.c
 
-TARGET = load.elf
+TARGET_O0 = load_O0.elf
+TARGET_O3 = load_O3.elf
 
-all: $(TARGET)
+# Build both targets by default
+all: $(TARGET_O0) $(TARGET_O3)
 
-$(TARGET): $(SRCS)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
+# Rule for O0
+$(TARGET_O0): $(SRCS)
+	$(CC) $(CFLAGS_BASE) -O0 $(LDFLAGS) -o $@ $^
+
+# Rule for O3
+$(TARGET_O3): $(SRCS)
+	$(CC) $(CFLAGS_BASE) -O3 $(LDFLAGS) -o $@ $^
 
 clean:
-	rm -f $(TARGET)
+	rm -f $(TARGET_O0) $(TARGET_O3)
