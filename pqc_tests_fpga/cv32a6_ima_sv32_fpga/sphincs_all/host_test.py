@@ -21,7 +21,7 @@ def run_kyber_test():
             if "Waiting for trigger" in line:
                 break
                 
-        print("\nTriggering SHPHINCS+ test on FPGA...")
+        print("\nTriggering SPHINCS+ test on FPGA...")
         ser.write(b'c')
         
         print("\n--- Test Output ---")
