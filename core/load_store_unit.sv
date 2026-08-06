@@ -172,6 +172,10 @@ module load_store_unit
     // RVFI information - RVFI
     output logic      [CVA6Cfg.PLEN-1:0] rvfi_mem_paddr_o
 );
+  logic [CVA6Cfg.XLEN-1:0] load_result_log /* verilator public_flat_rw */;
+  logic [CVA6Cfg.XLEN-1:0] store_result_log /* verilator public_flat_rw */;
+  assign load_result_log = load_result_o;
+  assign store_result_log = store_result_o;
 
   // data is misaligned
   logic data_misaligned;

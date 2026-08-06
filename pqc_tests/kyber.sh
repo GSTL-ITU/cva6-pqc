@@ -17,8 +17,14 @@ PRINT_CYCLES=0
 # Set this to 1 if you want a detailed report on instruction counts and ratios
 PROFILE=0
 
-# Set this to 1 if you want a log of ALU operands and results in EX-Stage
+# Set these to 1 if you want to logs these values and their hamming weights
+# WARNING: File sizes might be large!
+# ALU operand a-b and result (ex-stage)
 LOG_ALU=0
+# x0 to x31 (id-stage)
+LOG_REGFILE=0
+# load-store results (ex-stage)
+LOG_LSU=0
  
 ############################################################################################
 
@@ -37,6 +43,14 @@ export PQC_TESTS_CFLAGS=""
 if [ $LOG_ALU -eq 1 ]; then
     echo "ALU logging is enabled. Logs can be found in '${TEST_NAME}_alu_cycle_trace.log' in cva6-pqc/pqc_tests"
     export PQC_TESTS_CFLAGS+=" -DLOG_ALU -DTEST_NAME=$TEST_NAME"
+fi
+if [ $LOG_REGFILE -eq 1 ]; then
+    echo "Register file logging is enabled. Logs can be found in '${TEST_NAME}_rf_cycle_trace.log' in cva6-pqc/pqc_tests"
+    export PQC_TESTS_CFLAGS+=" -DLOG_REGFILE -DTEST_NAME=$TEST_NAME"
+fi
+if [ $LOG_LSU -eq 1 ]; then
+    echo "Load-store unit logging is enabled. Logs can be found in '${TEST_NAME}_lsu_cycle_trace.log' in cva6-pqc/pqc_tests"
+    export PQC_TESTS_CFLAGS+=" -DLOG_LSU -DTEST_NAME=$TEST_NAME"
 fi
 export EXTRA_FLAGS+=" -DKYBER_K=$DKYBERK"
 

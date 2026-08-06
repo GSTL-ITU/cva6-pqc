@@ -36,9 +36,11 @@ Set `PROFILE` to 1 if you want a detailed report on call counts and ratios. This
 ```sh
 PROFILE=1
 ```
-Setting `LOG_ALU` to 1 will generate a `<TEST_NAME>_alu_cycle_trace.log` file that shows the values of ALU operands and results in the Execute stage, alongside the clock cycle and the program counter values (for Verilator simulation).
+Setting below values to 1 will generate log files that shows the values and hamming weights of ALU operands / registers / load-store results alongside the clock cycle and the program counter values (for Verilator simulation).
 ```sh
 LOG_ALU=1
+LOG_REGFILE=1
+LOG_LSU=1
 ```
 
-Finally, there are some additional options for different test, mainly different parameters for the pqc algorithms, which you might want to check out. Resulting log files might be too large, so the testing script might only copy the iss log into this directory.
+Finally, there are some additional options for different test, mainly different parameters for pqc algorithms, which you might want to check out. Resulting log files might be too large, so the testing script might only copy the iss log into this directory.

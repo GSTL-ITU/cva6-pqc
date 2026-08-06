@@ -20,3 +20,14 @@ lint_off -rule WIDTHEXPAND -file "*/core/axi_shim.sv"
 lint_off -rule WIDTHEXPAND -file "*/core/issue_read_operands.sv"
 lint_off -rule WIDTHEXPAND -file "*/core/ariane_regfile_ff.sv"
 lint_off -rule SELRANGE -file "*/core/commit_stage.sv"
+
+
+// Uncomment to trace these signals only (might be used for Hamming Weight calculations in the future)
+//tracing_off -scope "*"
+//tracing_on -scope "ariane_testharness.i_ariane.i_cva6.ex_stage_i.alu_wrapper_i.alu_i.operand_a" 
+//tracing_on -scope "ariane_testharness.i_ariane.i_cva6.ex_stage_i.alu_wrapper_i.alu_i.operand_b"
+//tracing_on -scope "ariane_testharness.i_ariane.i_cva6.ex_stage_i.alu_wrapper_i.alu_i.result_o"  
+//tracing_on -scope "ariane_testharness.i_ariane.i_cva6.issue_stage_i.i_issue_read_operands.gen_asic_regfile.i_ariane_regfile.mem"
+//tracing_on -scope "ariane_testharness.i_ariane.i_cva6.issue_stage_i.i_issue_read_operands.gen_fpga_regfile.i_ariane_regfile_fpga.mem"
+//tracing_on -scope "ariane_testharness.i_ariane.i_cva6.ex_stage_i.lsu_i.load_result_o"
+//tracing_on -scope "ariane_testharness.i_ariane.i_cva6.ex_stage_i.lsu_i.store_result_o"

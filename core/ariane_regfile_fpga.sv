@@ -51,7 +51,7 @@ module ariane_regfile_fpga #(
   localparam LOG_NR_WRITE_PORTS = CVA6Cfg.NrCommitPorts == 1 ? 1 : $clog2(CVA6Cfg.NrCommitPorts);
 
   // Distributed RAM usually supports one write port per block - duplicate for each write port.
-  logic [NUM_WORDS-1:0][DATA_WIDTH-1:0] mem[CVA6Cfg.NrCommitPorts];
+  logic [NUM_WORDS-1:0][DATA_WIDTH-1:0] mem[CVA6Cfg.NrCommitPorts] /* veilator public_flat_rw */;
 
   logic [CVA6Cfg.NrCommitPorts-1:0][NUM_WORDS-1:0] we_dec;
   logic [NUM_WORDS-1:0][LOG_NR_WRITE_PORTS-1:0] mem_block_sel;

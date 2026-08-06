@@ -154,7 +154,7 @@ module issue_read_operands
   rs3_len_t operand_c_fpr;
   // output flipflop (ID <-> EX)
   fu_data_t [CVA6Cfg.NrIssuePorts-1:0] fu_data_n, fu_data_q;
-  logic               [        CVA6Cfg.VLEN-1:0]                   pc_n;
+  logic               [        CVA6Cfg.VLEN-1:0]                   pc_n /* verilator public_flat_rw */;
   logic                                                            is_compressed_instr_n;
   branchpredict_sbe_t                                              branch_predict_n;
   logic               [CVA6Cfg.NrIssuePorts-1:0][CVA6Cfg.XLEN-1:0] imm_forward_rs3;

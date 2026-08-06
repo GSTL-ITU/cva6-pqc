@@ -287,17 +287,31 @@ done_processing:
 
   std::unique_ptr<Variane_testharness> top(new Variane_testharness);
 
-#ifdef LOG_ALU
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
 #ifndef TEST_NAME
 #define TEST_NAME unknown_test
 #endif
-  std::string test_name = TOSTRING(TEST_NAME);
+std::string test_name = TOSTRING(TEST_NAME);
+#ifdef LOG_ALU
   std::ofstream alu_log("/workspaces/cva6-pqc/pqc_tests/" + test_name + "_alu_cycle_trace.log");
   if (alu_log.is_open()) {
-    alu_log << "Cycle, PC, Operand_A, Operand_B, Result" << std::endl;
-    alu_log << "---------------------------------------" << std::endl;
+    alu_log << "Cycle, PC, Operand_A: Operand_A HW, Operand_B: Operand_B HW, Result: Result HW" << std::endl;
+    alu_log << "------------------------------------------------------------------------------" << std::endl;
+  }
+#endif
+#ifdef LOG_REGFILE
+  std::ofstream regfile_log("/workspaces/cva6-pqc/pqc_tests/" + test_name + "_regfile_cycle_trace.log");
+  if (regfile_log.is_open()) {
+    regfile_log << "Cycle, PC, x0: x0 HW, x1: x1 HW, ..., x31: x31 HW" << std::endl;
+    regfile_log << "-------------------------------------------------" << std::endl;
+  }
+#endif
+#ifdef LOG_LSU
+  std::ofstream lsu_log("/workspaces/cva6-pqc/pqc_tests/" + test_name + "_lsu_cycle_trace.log");
+  if (lsu_log.is_open()) {
+    lsu_log << "Cycle, PC, Load: Load HW, Store: Store HW" << std::endl;
+    lsu_log << "-----------------------------------------" << std::endl;
   }
 #endif
 
@@ -377,19 +391,44 @@ done_processing:
     top->eval();
 
 #ifdef LOG_ALU
-    if (top->rst_ni == 1 && alu_log.is_open()) {
+  if (top->rst_ni == 1 && alu_log.is_open()) {
+    auto alu_operand_a  = top->rootp->ariane_testharness__DOT__i_ariane__DOT__i_cva6__DOT__ex_stage_i__DOT__alu_wrapper_i__DOT__alu_i__DOT__operand_a;
+    auto alu_operand_b  = top->rootp->ariane_testharness__DOT__i_ariane__DOT__i_cva6__DOT__ex_stage_i__DOT__alu_wrapper_i__DOT__alu_i__DOT__operand_b;
+    auto alu_result_log = top->rootp->ariane_testharness__DOT__i_ariane__DOT__i_cva6__DOT__ex_stage_i__DOT__alu_wrapper_i__DOT__alu_i__DOT__result_log;
+    auto pc_ex      = top->rootp->ariane_testharness__DOT__i_ariane__DOT__i_cva6__DOT__ex_stage_i__DOT__pc_i;
 
-      auto alu_operand_a  = top->rootp->ariane_testharness__DOT__i_ariane__DOT__i_cva6__DOT__ex_stage_i__DOT__alu_wrapper_i__DOT__alu_i__DOT__operand_a;
-      auto alu_operand_b  = top->rootp->ariane_testharness__DOT__i_ariane__DOT__i_cva6__DOT__ex_stage_i__DOT__alu_wrapper_i__DOT__alu_i__DOT__operand_b;
-      auto alu_result_log = top->rootp->ariane_testharness__DOT__i_ariane__DOT__i_cva6__DOT__ex_stage_i__DOT__alu_wrapper_i__DOT__alu_i__DOT__result_log;
-      auto alu_pc_ex      = top->rootp->ariane_testharness__DOT__i_ariane__DOT__i_cva6__DOT__ex_stage_i__DOT__pc_i;
-    
-      alu_log << "CYCLE: " << std::dec << (main_time / 2) << ",  "
-      << "PC: 0x" << std::hex << std::setw(16) << std::setfill('0') << alu_pc_ex      << ",  "
-      << "OP-A: 0x" << std::hex << std::setw(16) << std::setfill('0') << alu_operand_a  << ",  "
-      << "OP-B: 0x" << std::hex << std::setw(16) << std::setfill('0') << alu_operand_b  << ",  "
-      << "RES: 0x" << std::hex << std::setw(16) << std::setfill('0') << alu_result_log << std::endl;
+    alu_log << "CYCLE: " << std::dec << (main_time / 2) << ",    "
+    << "PC-EX: 0x" << std::hex << std::setw(16) << std::setfill('0') << pc_ex << ",    "
+    << "OP-A: 0x" << std::hex << std::setw(16) << std::setfill('0') << alu_operand_a  << ":  " << std::dec << __builtin_popcountll(alu_operand_a)  << ",    "
+    << "OP-B: 0x" << std::hex << std::setw(16) << std::setfill('0') << alu_operand_b  << ":  " << std::dec << __builtin_popcountll(alu_operand_b)  << ",    "
+    << "RES: 0x" << std::hex << std::setw(16) << std::setfill('0') << alu_result_log << ":  " << std::dec << __builtin_popcountll(alu_result_log)  << std::endl;
+  }
+#endif
+#ifdef LOG_REGFILE
+  if (top->rst_ni == 1 && alu_log.is_open()) {
+    auto regf_mem = top->rootp->ariane_testharness__DOT__i_ariane__DOT__i_cva6__DOT__issue_stage_i__DOT__i_issue_read_operands__DOT__gen_asic_regfile__DOT__i_ariane_regfile__DOT__mem;
+    auto pc_id = top->rootp->ariane_testharness__DOT__i_ariane__DOT__i_cva6__DOT__issue_stage_i__DOT__i_issue_read_operands__DOT__pc_n;
+
+    regfile_log << "CYCLE: " << std::dec << (main_time / 2) << ",    "
+    << "PC: 0x" << std::hex << std::setw(16) << std::setfill('0') << pc_id;
+    for (int i = 0; i < 32; i++) {
+      auto curr = regf_mem.at(i);
+      regfile_log << ",    x" << std::dec << i << ": 0x" << std::hex << std::setw(16) << std::setfill('0') << curr << ":  " << std::dec << __builtin_popcountll(curr);
     }
+    regfile_log << std::endl;
+  }
+#endif
+#ifdef LOG_LSU
+  if (top->rst_ni == 1 && lsu_log.is_open()) {
+    auto lsu_load  = top->rootp->ariane_testharness__DOT__i_ariane__DOT__i_cva6__DOT__ex_stage_i__DOT__lsu_i__DOT__load_result_log;
+    auto lsu_store  = top->rootp->ariane_testharness__DOT__i_ariane__DOT__i_cva6__DOT__ex_stage_i__DOT__lsu_i__DOT__store_result_log;
+    auto pc_ex      = top->rootp->ariane_testharness__DOT__i_ariane__DOT__i_cva6__DOT__ex_stage_i__DOT__pc_i;
+
+    lsu_log << "CYCLE: " << std::dec << (main_time / 2) << ",    "
+    << "PC-EX: 0x" << std::hex << std::setw(16) << std::setfill('0') << pc_ex << ",    "
+    << "LOAD: 0x" << std::hex << std::setw(16) << std::setfill('0') << lsu_load  << ":  " << std::dec << __builtin_popcountll(lsu_load)  << ",    "
+    << "STORE: 0x" << std::hex << std::setw(16) << std::setfill('0') << lsu_store  << ":  " << std::dec << __builtin_popcountll(lsu_store)  << std::endl;
+  }
 #endif
 
 #if VM_TRACE
@@ -448,6 +487,16 @@ done_processing:
 #ifdef LOG_ALU
   if (alu_log.is_open()) {
     alu_log.close();
+  }
+#endif
+#ifdef LOG_REGFILE
+  if (regfile_log.is_open()) {
+    regfile_log.close();
+  }
+#endif
+#ifdef LOG_LSU
+  if (lsu_log.is_open()) {
+    lsu_log.close();
   }
 #endif
 
