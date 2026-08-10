@@ -1,8 +1,21 @@
 # FPGA Tests
 
-**WORK IN PROGRESS!** This sub-directory will fulfill all the required scripts, linkers and main C codes for real-time FPGA implementation and tests. 
+## PQC Hardware Cycle Analysis (`cv32a6_ima_sv32_fpga`)
 
-This guide outlines how to establish a JTAG connection to the CVA6 soft core on the FPGA using OpenOCD and how to load and execute compiled `.elf` binaries.
+| Algorithm | Operation | Unoptimized (`-O0`) Cycles | Optimized (`-O3`) Cycles |
+| :--- | :--- | ---: | ---: |
+| **Kyber** <br>*(ML-KEM)* | Keypair Generation | 18,862,487 | 4,870,962 |
+| | Encapsulation | 20,469,834 | 5,132,604 |
+| | Decapsulation | 21,835,714 | 5,375,795 |
+| **Dilithium** <br>*(ML-DSA)* | Keypair Generation | 39,713,233 | 10,698,993 |
+| | Signing | 319,767,109 | 84,220,016 |
+| | Verification | 40,686,421 | 10,940,832 |
+| **SPHINCS+** <br>*(SLH-DSA)* | Keypair Generation | 611,929,855 | 2,870,229,957 |
+| | Signing | 625,469,793 | 3,102,258,972 |
+| | Verification | 771,250,149 | 204,513,860 |
+| **Falcon** <br>*(FN-DSA)* | Keypair Generation | 2,723,650,597 | 196,182,819 |
+| | Signing | 1,344,415,413 | 80,656,349 |
+| | Verification | 6,973,136 | 1,144,339 |
 
 ---
 
@@ -16,6 +29,7 @@ This guide outlines how to establish a JTAG connection to the CVA6 soft core on 
 | Fully run Kyber, count clock cycles, and print cycles to host | `kyber_all` | ✅ **Done** |
 | Fully run Dilithium, count clock cycles, and print cycles to host | `dilithium_all` | ✅ **Done** |
 | Fully run Falcon, count clock cycles, and print cycles to host | `falcon_all` | ✅ **Done** | 
+| Fully run Falcon, count clock cycles, and print cycles to host | `sphincs_all` | ✅ **Done** | 
 
 
 Eventhough Every test folder has its own READMEs, the general concept of usign OpenOCD and GDB (GNU Debugger) is explained below.
