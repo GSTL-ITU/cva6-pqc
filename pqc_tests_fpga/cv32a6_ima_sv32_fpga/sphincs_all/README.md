@@ -96,11 +96,11 @@ Once `continue` is executed, **Terminal 3** should instantly print the clean ini
 
 The following table details the cycle counts for the SPHINCS+ cryptographic operations running on the FPGA. Due to the extensive runtime of this algorithm, results are provided only for the optimized build (`-O3`).
 
-| Operation | Optimized (`-O3`) Cycles |
-| :--- | ---: |
-| **Keypair Generation** | 2,870,229,957 |
-| **Signing Message** | 3,102,258,972 |
-| **Verifying Message** | 204,513,860 |
+| Operation | Unoptimized (`-O0`) Cycles | Optimized (`-O3`) Cycles |
+| :--- | ---: | ---: |
+| **Keypair Generation** | 611,929,855 | 2,870,229,957 |
+| **Signing Message** | 625,469,793 | 3,102,258,972 |
+| **Verifying Message** | 771,250,149 | 204,513,860 |
 
 ## Troubleshooting
 * **Garbage characters:** This is a baud rate mismatch or a framing error. Ensure `host_test.py` is set to `57600` baud and that you are using a 25MHz system clock on the FPGA.
