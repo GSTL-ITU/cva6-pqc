@@ -17,6 +17,36 @@
 | | Signing | 1,344,415,413 | 80,656,349 |
 | | Verification | 6,973,136 | 1,144,339 |
 
+## Re-run with GCC 15.2 and the shared harness (October 2026)
+
+Same core and bitstream flow as above (Nexys Video, 25 MHz), built with xPack
+GCC 15.2 at `-O3`:
+
+* **Old test**: the `*_all/load_O3.elf` programs of this folder, unchanged.
+* **Shared harness**: [`pqc_bench`](cv32a6_ima_sv32_fpga/pqc_bench/README.md), the same harness and crypto
+  files as on the HORNET core (common-pqc-lib-riscv), 64-bit `mcycle`, outputs
+  checked against a native build. Seed 0 is the same seed as the old tests; the
+  median is over 100 seeds (Falcon: 25), each run with fresh randomness.
+
+| Algorithm | Operation | Old test, GCC 15.2 | Shared harness, seed 0 | Median (seeds) |
+| :--- | :--- | ---: | ---: | ---: |
+| **Kyber** <br>*(ML-KEM)* | Keypair Generation | 3,086,896 | 3,088,479 | 3,078,144 (100) |
+|  | Encapsulation | 3,323,788 | 3,323,645 | 3,327,446 (100) |
+|  | Decapsulation | 3,613,505 | 3,615,412 | 3,615,900 (100) |
+| **Dilithium** <br>*(ML-DSA)* | Keypair Generation | 6,560,732 | 6,555,112 | 6,651,464 (100) |
+|  | Signing | 59,982,875 | 59,935,646 | 15,143,069 (100) |
+|  | Verification | 6,811,420 | 6,816,171 | 6,813,650 (100) |
+| **Falcon** <br>*(FN-DSA)* | Keypair Generation | 166,531,093 | 166,486,014 | 292,037,681 (25) |
+|  | Signing | 69,691,296 | 69,828,009 | 69,790,061 (25) |
+|  | Verification | 845,697 | 887,572 | 886,922 (25) |
+| **SPHINCS+** <br>*(SLH-DSA)* | Keypair Generation | overnight run | overnight run | overnight run |
+|  | Signing | overnight run | overnight run | overnight run |
+|  | Verification | overnight run | overnight run | overnight run |
+
+The newer compiler alone needs 15-40 % fewer cycles than the August numbers
+above. CVA6 counts vary by a few thousand cycles between runs of the same
+program (DDR3 and cache timing).
+
 ---
 
 ## Project Status & To-Do
@@ -28,8 +58,9 @@
 | Fully run Kyber over UART | `kyber_uart` | ✅ **Done** |
 | Fully run Kyber, count clock cycles, and print cycles to host | `kyber_all` | ✅ **Done** |
 | Fully run Dilithium, count clock cycles, and print cycles to host | `dilithium_all` | ✅ **Done** |
-| Fully run Falcon, count clock cycles, and print cycles to host | `falcon_all` | ✅ **Done** | 
-| Fully run Falcon, count clock cycles, and print cycles to host | `sphincs_all` | ✅ **Done** | 
+| Fully run Falcon, count clock cycles, and print cycles to host | `falcon_all` | ✅ **Done** |
+| Shared harness (same code as HORNET), 64-bit mcycle, digests, many seeds | `pqc_bench` | ✅ **Done** |
+| Fully run SPHINCS+, count clock cycles, and print cycles to host | `sphincs_all` | ✅ **Done** | 
 
 
 Eventhough Every test folder has its own READMEs, the general concept of usign OpenOCD and GDB (GNU Debugger) is explained below.

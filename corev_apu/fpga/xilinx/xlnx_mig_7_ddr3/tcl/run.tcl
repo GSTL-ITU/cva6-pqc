@@ -1,3 +1,5 @@
+# board files outside Vivado's default paths (for example the XHub store in batch mode)
+if {[info exists ::env(BOARD_REPO_PATHS)]} { set_param board.repoPaths $::env(BOARD_REPO_PATHS) }
 set partNumber $::env(XILINX_PART)
 set boardName  $::env(XILINX_BOARD)
 set boardNameShort $::env(BOARD)

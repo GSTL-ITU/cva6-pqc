@@ -14,6 +14,8 @@
 
 # Author: Florian Zaruba <zarubaf@iis.ee.ethz.ch>
 
+# board files outside Vivado's default paths (for example the XHub store in batch mode)
+if {[info exists ::env(BOARD_REPO_PATHS)]} { set_param board.repoPaths $::env(BOARD_REPO_PATHS) }
 set project ariane
 
 create_project $project . -force -part $::env(XILINX_PART)
