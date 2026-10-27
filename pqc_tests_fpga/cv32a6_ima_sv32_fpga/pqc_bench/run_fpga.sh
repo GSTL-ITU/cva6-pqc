@@ -33,7 +33,7 @@ bus=$(lsusb -d 0403:6010 | head -1 | sed -E 's/Bus ([0-9]+) Device ([0-9]+).*/\1
 
 docker run --rm --device "$port" -u "$(id -u):$(id -g)" --group-add "$(stat -c %g "$port")" \
     -v "$here:$here" -v "$(dirname "$log"):$(dirname "$log")" "$image" \
-    timeout "$limit" python3 "$here/uart_log.py" --port "$port" --log "$log" --until "$until" $trigger \
+    timeout "$limit" python3 "$here/uart_log.py" --port "$port" --log "$log" --until "$until" --timeout "$limit" $trigger \
     > "$log.console" 2>&1 &
 logger=$!
 sleep 2

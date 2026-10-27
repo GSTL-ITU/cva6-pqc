@@ -39,9 +39,9 @@ GCC 15.2 at `-O3`:
 | **Falcon** <br>*(FN-DSA)* | Keypair Generation | 166,531,093 | 166,486,014 | 292,037,681 (25) |
 |  | Signing | 69,691,296 | 69,828,009 | 69,790,061 (25) |
 |  | Verification | 845,697 | 887,572 | 886,922 (25) |
-| **SPHINCS+** <br>*(SLH-DSA)* | Keypair Generation | overnight run | overnight run | overnight run |
-|  | Signing | overnight run | overnight run | overnight run |
-|  | Verification | overnight run | overnight run | overnight run |
+| **SPHINCS+** <br>*(SLH-DSA)* | Keypair Generation | 4,233,778,386 (32-bit, wrapped) | 16,813,876,091 | — |
+|  | Signing | not measured (run > 60 min) | not measured | — |
+|  | Verification | not measured | not measured | — |
 
 The newer compiler alone needs 15-40 % fewer cycles than the August numbers
 above. CVA6 counts vary by a few thousand cycles between runs of the same
