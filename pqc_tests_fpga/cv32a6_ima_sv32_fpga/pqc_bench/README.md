@@ -17,7 +17,7 @@ harness (`make host` in common-pqc-lib-riscv), and of the HORNET runs.
 
 ```sh
 make [RUNS=100] [COMMON_PQC=../../../../common-pqc-lib-riscv]
-#   build/r<RUNS>/{kyber3,dilithium2,falcon9,sphincs}.elf
+#   build/r<RUNS>/{kyber3,dilithium2,falcon9}.elf
 ```
 
 `RUNS` operations per scheme, each with fresh randomness from the scheme's

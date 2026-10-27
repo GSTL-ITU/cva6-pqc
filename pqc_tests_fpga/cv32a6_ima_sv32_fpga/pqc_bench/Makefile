@@ -1,7 +1,7 @@
 # The PQC harnesses of common-pqc-lib-riscv on CVA6 (cv32a6_ima_sv32_fpga, Nexys Video):
 # the same harness and crypto sources as on HORNET, timed with the 64-bit mcycle.
 #
-#   make [RUNS=100]            build/r<RUNS>/{kyber3,dilithium2,falcon9,sphincs}.elf
+#   make [RUNS=100]            build/r<RUNS>/{kyber3,dilithium2,falcon9}.elf
 #   ./run_fpga.sh <elf> <log>  load with OpenOCD/GDB, log the UART until "result "
 #
 # COMMON_PQC: checkout of common-pqc-lib-riscv (default: next to this repository)
@@ -24,7 +24,6 @@ COMMON  = ../../../verif/bsp/crt0.S bench_cva6.c
 K  = $(COMMON_PQC)/c-ml-kem-kyber/riscv-hornet
 D  = $(COMMON_PQC)/c-ml-dsa-dilithium/risc-v/hornet
 F  = $(COMMON_PQC)/c-fn-dsa-falcon/risc-v/hornet
-S  = $(COMMON_PQC)/c-slh-dsa-sphincs/risc-v/hornet/sphincs-shake256-128s-simple
 
 KYBER_SRCS = $(K)/test/hornet_kyber.c $(addprefix $(K)/,cbd.c fips202.c indcpa.c kem.c ntt.c poly.c \
              polyvec.c randombytes.c reduce.c symmetric-shake.c verify.c)
@@ -32,10 +31,8 @@ DILITHIUM_SRCS = $(D)/test/hornet_dilithium.c $(addprefix $(D)/,sign.c packing.c
              reduce.c rounding.c randombytes.c fips202.c symmetric-shake.c)
 FALCON_SRCS = $(F)/test/hornet_falcon.c $(addprefix $(F)/src/,codec.c common.c falcon.c fft.c fpr.c \
              keygen.c rng.c shake.c sign.c vrfy.c)
-SPHINCS_SRCS = $(S)/test/hornet_sphincs.c $(addprefix $(S)/,address.c randombytes.c wots.c utils.c fors.c \
-             sign.c hash_shake256.c thash_shake256_simple.c fips202.c)
 
-all: $(OUT)/kyber3.elf $(OUT)/dilithium2.elf $(OUT)/falcon9.elf $(OUT)/sphincs.elf
+all: $(OUT)/kyber3.elf $(OUT)/dilithium2.elf $(OUT)/falcon9.elf
 
 $(OUT)/kyber3.elf: $(KYBER_SRCS) $(COMMON) bench_cva6.h
 	@mkdir -p $(@D)
@@ -46,9 +43,6 @@ $(OUT)/dilithium2.elf: $(DILITHIUM_SRCS) $(COMMON) bench_cva6.h
 $(OUT)/falcon9.elf: $(FALCON_SRCS) $(COMMON) bench_cva6.h
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -DLOGN=9 $(LDFLAGS) -o $@ $(COMMON) $(FALCON_SRCS)
-$(OUT)/sphincs.elf: $(SPHINCS_SRCS) $(COMMON) bench_cva6.h
-	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(COMMON) $(SPHINCS_SRCS)
 
 clean:
 	rm -rf build
