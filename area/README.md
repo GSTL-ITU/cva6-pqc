@@ -13,7 +13,8 @@ Nexys Video (XC7A200T-1SBG484), Vivado 2026.1, after place and route,
 RTL at commit `f4eea742`, target `cv32a6_ima_sv32_fpga`, 25 MHz core clock.
 The whole design is the bitstream of `make fpga` (the same flow and
 options as `corev_apu/fpga/scripts/run.tcl`). Setup WNS: whole design
-+0.154 ns, core alone +14.121 ns.
++0.154 ns (an I/O path, not the core clock), core alone +14.121 ns; see
+[Critical path](#critical-path).
 
 | | LUTs | LUT as logic | LUTRAM | SRL | FFs | BRAM (36 Kb) | DSPs |
 |---|---:|---:|---:|---:|---:|---:|---:|
@@ -71,6 +72,64 @@ and merge logic across hierarchy boundaries.
 The full tables are in [area.md](area.md), a copy of the generated
 `build/area/nexys_video/area.md`.
 
+## Critical path
+
+Setup, slow process corner, same routed designs as the area numbers. Min
+period is requirement minus slack, and Fmax follows from it.
+
+| Path | Clock constraint | Slack (ns) | Data path (ns) | Logic / route (ns) | Logic levels | Min period (ns) | Fmax (MHz) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| **Whole design**, core clock (also the worst path inside `i_ariane`) | 40 ns | +12.806 | 26.524 | 3.311 / 23.213 | 18 | 27.194 | 36.8 |
+| **Core** alone | 40 ns | +14.121 | 25.229 | 3.753 / 21.476 | 20 | 25.879 | 38.6 |
+| **Core** alone, tighter constraint | 20 ns | +1.582 | 18.365 | 4.464 / 13.901 | 19 | 18.418 | 54.3 |
+
+- At 40 ns both paths run from the scoreboard's `commit_pointer_q` to the
+  address of an instruction cache SRAM. At 20 ns the path is
+  `en_ld_st_translation_q` (CSR file) to the load pipeline register in the LSU.
+- The 40 ns rows show how fast these particular routed results could be
+  clocked, not what the design can reach: 85–88% of the delay is routing,
+  because the tools stop optimizing once timing is met. The 20 ns run still
+  meets timing, so 54.3 MHz is a lower bound on the core's Fmax. Its area is
+  unchanged (8,274 vs 8,273 LUTs in the Vivado totals).
+- The whole design's overall worst slack, +0.154 ns, is not a logic path: it
+  is the I/O constraint from the `prog_txen` pin to `i_dpti_ctrl/ctlTxe_reg`
+  (one input buffer, on the DPTI clock). On the DDR3 controller's 10 ns clock
+  the worst slack is +1.500 ns.
+- The 54.3 MHz applies to the core alone. Running the SoC faster would need
+  the clock generator IP changed and the whole flow rerun, which was not done.
+
+The 20 ns run is not part of `make -C area`. To repeat it, from an empty
+directory:
+
+```
+vivado -mode batch -nojournal -source <repo>/area/area_core.tcl -tclargs \
+    <repo>/build/area/nexys_video/src $PWD xc7a200tsbg484-1 20 1 cv32a6_ima_sv32_fpga
+```
+
+## Static power
+
+Device static power from `report_power`, which needs no simulation:
+
+| Design | Device static (W), at estimated Tj | Estimated Tj (°C) | Device static (W), Tj = 25 °C | of which I/O banks (Vcco) (W) |
+|---|---:|---:|---:|---:|
+| **Whole design** | 0.171 | 28.7 | 0.165 | 0.043 |
+| **Core** alone | 0.123 | 25.5 | 0.122 | 0.000 |
+
+- **These are not per-block numbers.** Device static covers the whole
+  XC7A200T, used or not, and Vivado does not split it by block. So 0.122 W is
+  not the core's own leakage, and subtracting the rows does not give the SoC's.
+  For the design on the board, quote 0.165 W as device static power.
+- Without the I/O banks both designs are at about 0.122 W (Vccint, Vccaux,
+  Vccbram and Vccadc have the same static currents). The whole 0.043 W
+  difference is Vcco: the board design powers I/O banks, and the
+  out-of-context core has no I/O.
+- The Tj = 25 °C column is the one to compare. The estimated temperature comes
+  from the dynamic estimate, which here uses default switching activity
+  (confidence "Low" for the whole design, "Medium" for the core alone), so the
+  dynamic numbers in the reports should not be quoted without a simulation.
+- Ambient 25 °C, theta-JA 3.3 °C/W: Vivado's defaults, not measured on the
+  board.
+
 ## Other core configurations
 
 The core alone (out of context, after place and route, 25 MHz constraint) for
@@ -108,6 +167,37 @@ both.
 - All of them would fit the XC7A200T; the largest uses 37% of its LUTs.
   Timing at 25 MHz is met with 1.4 to 14 ns to spare. That slack is margin
   at this constraint, not an Fmax.
+
+Critical path of each configuration (setup, slow process corner, all at the
+40 ns constraint):
+
+| Configuration | Slack (ns) | Data path (ns) | Logic / route (ns) | Logic levels | Min period (ns) | Fmax (MHz) | From → to |
+|---|---:|---:|---:|---:|---:|---:|---|
+| `cv32a6_ima_sv32_fpga` (board) | +14.121 | 25.229 | 3.753 / 21.476 | 20 | 25.879 | 38.6 | scoreboard → I-cache SRAM |
+| `cv32a60x` | +10.087 | 29.858 | 5.864 / 23.994 | 31 | 29.913 | 33.4 | HPDcache controller → scoreboard |
+| `cv32a65x` | +1.414 | 38.579 | 8.698 / 29.881 | 48 | 38.586 | 25.9 | CSR file (PMP address) → scoreboard |
+| `cv32a6_imac_sv32` | +9.139 | 30.400 | 4.075 / 26.325 | 19 | 30.861 | 32.4 | LSU bypass → scoreboard |
+| `cv64a6_imafdc_sv39` | +2.964 | 36.885 | 10.439 / 26.446 | 50 | 37.036 | 27.0 | FPU → EX stage (`vaddr_to_be_flushed`) |
+| `cv64a6_imafdch_sv39` | +2.444 | 37.549 | 7.859 / 29.690 | 40 | 37.556 | 26.6 | LSU bypass → load pipeline register |
+| `cv64a6_imafdc_sv39_wb` | +3.263 | 36.398 | 6.632 / 29.766 | 39 | 36.737 | 27.2 | issue stage → LSU bypass |
+| `cv64a6_imafdc_sv39_hpdcache` | +2.871 | 37.000 | 9.969 / 27.031 | 50 | 37.129 | 26.9 | FPU → issue stage (`fu_data`) |
+| `cv64a6_imafdc_sv39_hpdcache_wb` | +3.350 | 36.499 | 11.027 / 25.472 | 50 | 36.650 | 27.3 | FPU → EX stage (`vaddr_to_be_flushed`) |
+
+These do not rank the configurations by speed. The tools stop optimizing once
+40 ns is met, so each number shows how far that routed result could be
+clocked, and the ones with the most slack are understated the most: the
+board's core goes from 38.6 MHz here to at least 54.3 MHz with a 20 ns
+constraint (see [Critical path](#critical-path)). A real comparison needs each
+configuration rerun with a tighter constraint. Logic depth is a better guide
+for now: the 64-bit cores and `cv32a65x` have 39–50 logic levels against 19–31
+for the other 32-bit cores, so they are probably slower, but these runs do not
+show by how much.
+
+Static power is not available per configuration: these runs predate the power
+reports. `make -C area configs` skips any configuration that already has its
+reports, so delete `build/area/nexys_video/configs/<target>/` first to rerun
+one and get them. See [Static power](#static-power) for what those numbers
+would and would not mean.
 
 Not included: `cv64a60ax` (its config package does not set the `RVZiCbom`
 field that `config_pkg` now has, so it does not compile in this repository),
@@ -168,6 +258,10 @@ Output in `build/area/nexys_video/`:
 | `soc_timing_route.rpt` | its timing summary |
 | `core_util_<stage>.rpt`, `core_util_hier_<stage>.rpt` | the core alone, out of context |
 | `core_timing_route.rpt` | its timing summary at 25 MHz (`IMPL=1`) |
+| `soc_path_worst.rpt`, `soc_path_core_clk.rpt`, `soc_path_core.rpt` | worst setup path of the whole design: any clock, core clock, inside the core |
+| `core_path.rpt` | critical path of the core alone (`IMPL=1`) |
+| `soc_power.rpt`, `core_power.rpt` | `report_power` at the estimated junction temperature (core: `IMPL=1`) |
+| `soc_power_tj25.rpt`, `core_power_tj25.rpt` | the same at a fixed 25 °C |
 | `src/corev_apu/fpga/work-fpga/ariane_xilinx.bit` | the bitstream itself |
 
 `<stage>` is `opt` (synthesis + `opt_design`) or `route`; the summary uses the

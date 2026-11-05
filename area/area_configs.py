@@ -13,7 +13,8 @@ import os
 import re
 import sys
 
-from area_summary import COLUMNS, find, fmt, parse_capacity, parse_hier, parse_wns, sub, total
+from area_summary import (COLUMNS, find, fmt, parse_capacity, parse_hier, parse_path, parse_wns,
+                          path_rows, sub, total)
 
 CLK_NS = 40.0  # area/Makefile CLK_NS: the board's 25 MHz core clock
 
@@ -134,6 +135,8 @@ def main(argv):
             'cva6': cva6.values,
             'blocks': blocks(cva6),
             'wns': parse_wns(f'{d}/core_timing_route.rpt'),
+            # the first path of the timing summary is the worst setup path
+            'path': parse_path(f'{d}/core_timing_route.rpt'),
             'features': features(config_fields(pkg)) if os.path.exists(pkg) else '?',
         }))
 
@@ -169,6 +172,19 @@ def main(argv):
               'HPD HPDcache. CV-X-IF port: the coprocessor interface of cva6, with no coprocessor; '
               '+ example coprocessor: `ariane` also instantiates cvxif_example_coprocessor, '
               'which is in the totals but not in the "cva6 LUTs" column.', '']
+
+    paths = [(t, r['path']) for t, r in rows if r and r['path']]
+    if paths:
+        lines += ['## Critical path', '']
+        lines += path_rows([(f'`{t}`', p) for t, p in paths])
+        lines += ['', 'Setup at the slow process corner, all at the same '
+                  f'{CLK_NS:g} ns constraint. Min period is requirement - slack. It is how far '
+                  'each routed result could be clocked, not the best that configuration could '
+                  'reach: the tools stop optimizing once timing is met, so configurations with '
+                  'much slack are understated the most, and the Fmax column is not a fair '
+                  'ranking of the configurations.', '']
+        lines += [f'- `{t}`: `{p["source"]}` to `{p["dest"]}`' for t, p in paths]
+        lines.append('')
 
     names = [b for b, _ in BLOCKS] + ['Other']
     for key, title in (('lut', 'LUTs'), ('ff', 'FFs'), ('bram', 'BRAM (36 Kb)')):

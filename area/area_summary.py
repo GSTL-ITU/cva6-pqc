@@ -126,6 +126,71 @@ def parse_wns(path):
     return None
 
 
+def parse_path(path):
+    """Fields of the single path in a report_timing file, or None."""
+    if not os.path.exists(path):
+        return None
+    text = open(path).read()
+    slack = re.search(r'Slack \(\w+\)\s*:\s*(-?[\d.]+)ns', text)
+    if not slack:
+        return None
+    delay = re.search(r'Data Path Delay:\s*([\d.]+)ns\s*\(logic ([\d.]+)ns.*?route ([\d.]+)ns', text)
+    clocks = re.findall(r'clocked by (\S+)', text)
+    return {
+        'slack': float(slack.group(1)),
+        'source': re.search(r'Source:\s+(\S+)', text).group(1),
+        'dest': re.search(r'Destination:\s+(\S+)', text).group(1),
+        'requirement': float(re.search(r'Requirement:\s*([\d.]+)ns', text).group(1)),
+        'delay': float(delay.group(1)),
+        'logic': float(delay.group(2)),
+        'route': float(delay.group(3)),
+        'levels': int(re.search(r'Logic Levels:\s*(\d+)', text).group(1)),
+        'clocks': (clocks[0], clocks[1]) if len(clocks) > 1 else None,
+    }
+
+
+def parse_power(path):
+    """Fields of the summary table of a report_power file, or None."""
+    if not os.path.exists(path):
+        return None
+    labels = {
+        'total': 'Total On-Chip Power (W)',
+        'dynamic': 'Dynamic (W)',
+        'static': 'Device Static (W)',
+        'tj': 'Junction Temperature (C)',
+        'confidence': 'Confidence Level',
+    }
+    out = {'vcco': 0.0}
+    for line in open(path):
+        cells = [c.strip() for c in line.split('|')[1:-1]]
+        for key, text in labels.items():
+            if key not in out and len(cells) >= 2 and cells[0] == text:
+                out[key] = cells[1]
+        # | Source | Voltage (V) | Total (A) | Dynamic (A) | Static (A) | ...
+        if len(cells) >= 5 and cells[0].startswith('Vcco'):
+            out['vcco'] += float(cells[1]) * float(cells[4])
+    return out if 'static' in out else None
+
+
+def path_rows(paths):
+    """Table of critical paths: (name, parse_path result) pairs."""
+    lines = ['| Path | Clocks | Slack (ns) | Requirement (ns) | Data path (ns) | Logic (ns) '
+             '| Route (ns) | Logic levels | Min period (ns) | Fmax (MHz) |',
+             '|---|---|' + '---:|' * 8]
+    for name, p in paths:
+        if p is None:
+            continue
+        same = p['clocks'] and p['clocks'][0] == p['clocks'][1]
+        clocks = ' &rarr; '.join(f'`{c}`' for c in p['clocks']) if p['clocks'] and not same \
+            else f'`{p["clocks"][0]}`' if p['clocks'] else '-'
+        period = p['requirement'] - p['slack']
+        limit = [f'{period:.3f}', f'{1000 / period:.1f}'] if same else ['-', '-']
+        lines.append(f'| {name} | {clocks} | {p["slack"]:+.3f} | {p["requirement"]:.3f} '
+                     f'| {p["delay"]:.3f} | {p["logic"]:.3f} | {p["route"]:.3f} | {p["levels"]} '
+                     f'| {limit[0]} | {limit[1]} |')
+    return lines
+
+
 def label(node):
     """Instance name and module, or only the name for the top ("(top)" module)."""
     return node.name if node.module == '(top)' else f'{node.name} ({node.module})'
@@ -256,6 +321,42 @@ def main(argv):
         f'{h} {100 * root.values[k] / avail[k]:.1f}% (of {fmt(avail[k], k)})'
         for k, h in COLUMNS if avail.get(k)) + '.')
     lines.append('')
+
+    paths = [(n, parse_path(f'{rdir}/{f}.rpt')) for n, f in (
+        ('Whole design, worst of any clock', 'soc_path_worst'),
+        ('Whole design, core clock', 'soc_path_core_clk'),
+        ('Core in the SoC, register to register', 'soc_path_core'),
+        ('Core alone (out of context)', 'core_path'))]
+    if any(p for _, p in paths):
+        lines += ['## Critical path', '']
+        lines += path_rows(paths)
+        lines += ['', 'Setup at the slow process corner. Min period is requirement - slack, '
+                  'shown when both ends are on one clock. It is how far this routed result '
+                  'could be clocked, not the best the design could reach: with a 40 ns '
+                  'constraint the tools stop optimizing once timing is met.', '']
+        for n, p in paths:
+            if p:
+                lines += [f'- {n}: `{p["source"]}` to `{p["dest"]}`']
+        lines.append('')
+
+    powers = [(n, parse_power(f'{rdir}/{p}_power.rpt'), parse_power(f'{rdir}/{p}_power_tj25.rpt'))
+              for n, p in (('Whole design', 'soc'), ('Core alone (out of context)', 'core'))]
+    if any(p for _, p, _ in powers):
+        lines += ['## Static power', '',
+                  '| Design | Device static (W), at estimated Tj | Estimated Tj (C) '
+                  '| Device static (W), Tj = 25 C | of which I/O banks (Vcco) (W) |',
+                  '|---|---:|---:|---:|---:|']
+        for n, p, fixed in powers:
+            if p:
+                lines.append(f'| {n} | {p["static"]} | {p.get("tj", "-")} '
+                             f'| {fixed["static"] if fixed else "-"} '
+                             f'| {f"{fixed["vcco"]:.3f}" if fixed else "-"} |')
+        lines += ['', 'From `report_power` with no switching activity. Device static covers the '
+                  'whole XC7A200T, used or not: Vivado does not split it by block, so these rows '
+                  'are not the core\'s or the SoC\'s own leakage and do not subtract into one. '
+                  'Without the I/O banks the two match; the out-of-context core has no I/O, so '
+                  'no Vcco. The estimated junction temperature depends on the vectorless dynamic '
+                  'estimate; the Tj = 25 C columns remove that dependence.', '']
 
     lines += ['## Core breakdown', '',
               f'`{"/".join(a.name for a in ancestors + (core,))}` in the SoC, '

@@ -16,6 +16,31 @@ Setup WNS: whole design +0.154 ns, core alone +14.121 ns.
 
 Device usage of the whole design: LUTs 23.7% (of 134,600), LUTRAM 2.1% (of 46,200), FFs 11.5% (of 269,200), BRAM (36 Kb) 6.4% (of 365), DSPs 0.5% (of 740).
 
+## Critical path
+
+| Path | Clocks | Slack (ns) | Requirement (ns) | Data path (ns) | Logic (ns) | Route (ns) | Logic levels | Min period (ns) | Fmax (MHz) |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Whole design, worst of any clock | `prog_clko_pin` &rarr; `clk_out1_xlnx_dpti_clk_1` | +0.154 | 10.648 | 1.080 | 1.080 | 0.000 | 1 | - | - |
+| Whole design, core clock | `clk_out1_xlnx_clk_gen` | +12.806 | 40.000 | 26.524 | 3.311 | 23.213 | 18 | 27.194 | 36.8 |
+| Core in the SoC, register to register | `clk_out1_xlnx_clk_gen` | +12.806 | 40.000 | 26.524 | 3.311 | 23.213 | 18 | 27.194 | 36.8 |
+| Core alone (out of context) | `clk` | +14.121 | 40.000 | 25.229 | 3.753 | 21.476 | 20 | 25.879 | 38.6 |
+
+Setup at the slow process corner. Min period is requirement - slack, shown when both ends are on one clock. It is how far this routed result could be clocked, not the best the design could reach: with a 40 ns constraint the tools stop optimizing once timing is met.
+
+- Whole design, worst of any clock: `prog_txen` to `i_dpti_ctrl/ctlTxe_reg/D`
+- Whole design, core clock: `i_ariane/i_cva6/issue_stage_i/i_scoreboard/commit_pointer_q_reg[0][1]/C` to `i_ariane/i_cva6/gen_cache_wt.i_cache_subsystem/i_cva6_icache/gen_sram[1].data_sram/data_sram/gen_cut[0].i_tc_sram_wrapper/i_ram/Mem_DP_reg/ADDRBWRADDR[8]`
+- Core in the SoC, register to register: `i_ariane/i_cva6/issue_stage_i/i_scoreboard/commit_pointer_q_reg[0][1]/C` to `i_ariane/i_cva6/gen_cache_wt.i_cache_subsystem/i_cva6_icache/gen_sram[1].data_sram/data_sram/gen_cut[0].i_tc_sram_wrapper/i_ram/Mem_DP_reg/ADDRBWRADDR[8]`
+- Core alone (out of context): `i_ariane/i_cva6/issue_stage_i/i_scoreboard/commit_pointer_q_reg[0][1]/C` to `i_ariane/i_cva6/gen_cache_wt.i_cache_subsystem/i_cva6_icache/gen_sram[0].tag_sram/data_sram/gen_cut[0].i_tc_sram_wrapper/i_ram/Mem_DP_reg/ADDRBWRADDR[7]`
+
+## Static power
+
+| Design | Device static (W), at estimated Tj | Estimated Tj (C) | Device static (W), Tj = 25 C | of which I/O banks (Vcco) (W) |
+|---|---:|---:|---:|---:|
+| Whole design | 0.171 | 28.7 | 0.165 | 0.043 |
+| Core alone (out of context) | 0.123 | 25.5 | 0.122 | 0.000 |
+
+From `report_power` with no switching activity. Device static covers the whole XC7A200T, used or not: Vivado does not split it by block, so these rows are not the core's or the SoC's own leakage and do not subtract into one. Without the I/O banks the two match; the out-of-context core has no I/O, so no Vcco. The estimated junction temperature depends on the vectorless dynamic estimate; the Tj = 25 C columns remove that dependence.
+
 ## Core breakdown
 
 `ariane_xilinx/i_ariane` in the SoC, largest blocks first; "share" is the part of the core's LUTs.

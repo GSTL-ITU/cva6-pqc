@@ -10,12 +10,23 @@
 # <target> a core/include/<target>_config_pkg.sv
 #
 # Reports (in <out_dir>): core_util_<stage>.rpt, core_util_hier_<stage>.rpt,
-# core_timing_route.rpt (impl=1 only); <stage> is "opt" or "route".
+# and with impl=1 core_timing_route.rpt, core_path.rpt (critical path),
+# core_power.rpt, core_power_tj25.rpt; <stage> is "opt" or "route".
 #
 # area.tcl sources this file (with core_area_lib set) for the board's own target.
 
 # configuration package of the board build (make fpga target=...)
 set board_target cv32a6_ima_sv32_fpga
+
+# <prefix>_power.rpt: report_power as it estimates by default (junction temperature
+# from the estimated total power), <prefix>_power_tj25.rpt: at a fixed 25 C, so
+# device static power of different designs compares at the same temperature.
+# No switching activity is given: the dynamic numbers are vectorless defaults.
+proc power_reports {prefix} {
+  report_power -file ${prefix}_power.rpt
+  set_operating_conditions -junction_temp 25
+  report_power -file ${prefix}_power_tj25.rpt
+}
 
 proc core_area {src out_dir part clk_period impl target} {
   global board_target
@@ -62,6 +73,8 @@ proc core_area {src out_dir part clk_period impl target} {
     report_utilization -file core_util_route.rpt
     report_utilization -hierarchical -hierarchical_depth 8 -file core_util_hier_route.rpt
     report_timing_summary -max_paths 20 -file core_timing_route.rpt
+    report_timing -delay_type max -max_paths 1 -file core_path.rpt
+    power_reports core
   }
   close_design
   # the next run starts from an empty in-memory project

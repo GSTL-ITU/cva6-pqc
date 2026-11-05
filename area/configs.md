@@ -32,6 +32,32 @@ The core alone (`ariane`, out of context) on xc7a200tsbg484-1, after place and r
 
 SB: scoreboard entries. D$ types: WT write-through, WB write-back, HPD HPDcache. CV-X-IF port: the coprocessor interface of cva6, with no coprocessor; + example coprocessor: `ariane` also instantiates cvxif_example_coprocessor, which is in the totals but not in the "cva6 LUTs" column.
 
+## Critical path
+
+| Path | Clocks | Slack (ns) | Requirement (ns) | Data path (ns) | Logic (ns) | Route (ns) | Logic levels | Min period (ns) | Fmax (MHz) |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| `cv32a6_ima_sv32_fpga` | `clk` | +14.121 | 40.000 | 25.229 | 3.753 | 21.476 | 20 | 25.879 | 38.6 |
+| `cv32a6_imac_sv32` | `clk` | +9.139 | 40.000 | 30.400 | 4.075 | 26.325 | 19 | 30.861 | 32.4 |
+| `cv32a60x` | `clk` | +10.087 | 40.000 | 29.858 | 5.864 | 23.994 | 31 | 29.913 | 33.4 |
+| `cv32a65x` | `clk` | +1.414 | 40.000 | 38.579 | 8.698 | 29.881 | 48 | 38.586 | 25.9 |
+| `cv64a6_imafdc_sv39` | `clk` | +2.964 | 40.000 | 36.885 | 10.439 | 26.446 | 50 | 37.036 | 27.0 |
+| `cv64a6_imafdch_sv39` | `clk` | +2.444 | 40.000 | 37.549 | 7.859 | 29.690 | 40 | 37.556 | 26.6 |
+| `cv64a6_imafdc_sv39_wb` | `clk` | +3.263 | 40.000 | 36.398 | 6.632 | 29.766 | 39 | 36.737 | 27.2 |
+| `cv64a6_imafdc_sv39_hpdcache` | `clk` | +2.871 | 40.000 | 37.000 | 9.969 | 27.031 | 50 | 37.129 | 26.9 |
+| `cv64a6_imafdc_sv39_hpdcache_wb` | `clk` | +3.350 | 40.000 | 36.499 | 11.027 | 25.472 | 50 | 36.650 | 27.3 |
+
+Setup at the slow process corner, all at the same 40 ns constraint. Min period is requirement - slack. It is how far each routed result could be clocked, not the best that configuration could reach: the tools stop optimizing once timing is met, so configurations with much slack are understated the most, and the Fmax column is not a fair ranking of the configurations.
+
+- `cv32a6_ima_sv32_fpga`: `i_ariane/i_cva6/issue_stage_i/i_scoreboard/commit_pointer_q_reg[0][1]/C` to `i_ariane/i_cva6/gen_cache_wt.i_cache_subsystem/i_cva6_icache/gen_sram[0].tag_sram/data_sram/gen_cut[0].i_tc_sram_wrapper/i_ram/Mem_DP_reg/ADDRBWRADDR[7]`
+- `cv32a6_imac_sv32`: `i_ariane/i_cva6/ex_stage_i/lsu_i/lsu_bypass_i/status_cnt_q_reg[0]/C` to `i_ariane/i_cva6/issue_stage_i/i_scoreboard/mem_q_reg[0][sbe][result][1]/CE`
+- `cv32a60x`: `i_ariane/i_cva6/gen_cache_hpd.i_cache_subsystem/i_dcache/i_hpdcache/hpdcache_ctrl_i/st1_req_q_reg[from_rtab]/C` to `i_ariane/i_cva6/issue_stage_i/i_scoreboard/mem_q_reg[0][sbe][rd][3]/D`
+- `cv32a65x`: `i_ariane/i_cva6/csr_regfile_i/pmpaddr_q_reg[4][1]/C` to `i_ariane/i_cva6/issue_stage_i/i_scoreboard/mem_q_reg[4][sbe][rd][3]/D`
+- `cv64a6_imafdc_sv39`: `i_ariane/i_cva6/ex_stage_i/fpu_gen.fpu_i/fpu_gen.i_fpnew_bulk/gen_operation_groups[3].i_opgroup_block/gen_merged_slice.i_multifmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fpnew_cast_multi/gen_inside_pipeline[0].mid_pipe_dst_fmt_q_reg[1][2]/C` to `i_ariane/i_cva6/ex_stage_i/vaddr_to_be_flushed_reg[6]/D`
+- `cv64a6_imafdch_sv39`: `i_ariane/i_cva6/ex_stage_i/lsu_i/lsu_bypass_i/status_cnt_q_reg[0]/C` to `i_ariane/i_cva6/ex_stage_i/lsu_i/i_pipe_reg_load/gen_register.d_o_reg[227]/D`
+- `cv64a6_imafdc_sv39_wb`: `i_ariane/i_cva6/issue_stage_i/i_issue_read_operands/branch_valid_q_reg[0]/C` to `i_ariane/i_cva6/ex_stage_i/lsu_i/lsu_bypass_i/mem_q_reg[1][vaddr][62]/D`
+- `cv64a6_imafdc_sv39_hpdcache`: `i_ariane/i_cva6/ex_stage_i/fpu_gen.fpu_i/fpu_gen.i_fpnew_bulk/gen_operation_groups[3].i_opgroup_block/gen_merged_slice.i_multifmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fpnew_cast_multi/gen_inside_pipeline[0].mid_pipe_dst_fmt_q_reg[1][2]/C` to `i_ariane/i_cva6/issue_stage_i/i_issue_read_operands/fu_data_q_reg[0][operand_b][13]/D`
+- `cv64a6_imafdc_sv39_hpdcache_wb`: `i_ariane/i_cva6/ex_stage_i/fpu_gen.fpu_i/fpu_gen.i_fpnew_bulk/gen_operation_groups[3].i_opgroup_block/gen_merged_slice.i_multifmt_slice/gen_num_lanes[0].active_lane.lane_instance.i_fpnew_cast_multi/gen_inside_pipeline[0].mid_pipe_dst_fmt_q_reg[1][1]/C` to `i_ariane/i_cva6/ex_stage_i/vaddr_to_be_flushed_reg[19]/D`
+
 ## LUTs by block
 
 | Configuration | Frontend | ID | Issue | EX (ALU, mul/div, LSU) | FPU | MMU | Caches | CSR | Other |

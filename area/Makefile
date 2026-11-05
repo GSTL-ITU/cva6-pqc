@@ -73,7 +73,8 @@ $(ROUTED): $(SRC)/.done $(BOARDS)/.done
 	    CC="$(RISCV)/bin/$(CROSS)gcc -Wno-error=int-conversion" > $(OUT)/make_fpga.log 2>&1
 
 reports:
-	cd $(OUT) && $(VIVADO) -mode batch -nojournal -log vivado.log \
+	cd $(OUT) && systemd-run --user --scope -q -p MemoryMax=$(MEMMAX) -p MemorySwapMax=0 \
+	    $(VIVADO) -mode batch -nojournal -log vivado.log \
 	    -source $(ROOT)/area/area.tcl -tclargs $(SRC) $(OUT) $(PART) $(CLK_NS) $(IMPL) > /dev/null
 	$(MAKE) --no-print-directory summary
 
