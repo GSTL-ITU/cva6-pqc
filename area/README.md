@@ -68,7 +68,8 @@ The negative LUT count of the last row: the blocks above add up to 299 LUTs
 more than the whole design, because `phys_opt_design` and LUT packing move
 and merge logic across hierarchy boundaries.
 
-The full tables, with every level, are in `build/area/nexys_video/area.md`.
+The full tables are in [area.md](area.md), a copy of the generated
+`build/area/nexys_video/area.md`.
 
 ## Other core configurations
 
@@ -114,7 +115,8 @@ field that `config_pkg` now has, so it does not compile in this repository),
 `cv64a6_imafdc_sv39_openpiton` (OpenPiton NoC interface).
 
 The full comparison, with LUTs, FFs and BRAMs per block (frontend, ID, issue,
-EX, FPU, MMU, caches, CSR), is in `build/area/nexys_video/configs.md`.
+EX, FPU, MMU, caches, CSR), is in [configs.md](configs.md), a copy of the
+generated `build/area/nexys_video/configs.md`.
 
 ## Running
 
@@ -185,6 +187,9 @@ The core is given two ways:
   LUTs around its data FIFO), the rest spread over the pipeline. FFs, LUTRAM,
   BRAM and DSPs match within 1%. The in-SoC number is the cost of the core as
   it is on the board.
+
+Rerunning the flow only rewrites the files in `build/`; copy `area.md` and
+`configs.md` here again to update the versions in this folder.
 
 Files: `area.tcl` (Vivado: SoC reports, then the core alone),
 `area_core.tcl` (Vivado: the core alone for any target), `area_summary.py`
